@@ -69,10 +69,19 @@ require('lazy').setup({
   -- Git related plugins
   'tpope/vim-fugitive',
   'tpope/vim-rhubarb',
+  'mhinz/vim-startify',
 
   -- Detect tabstop and shiftwidth automatically
   'tpope/vim-sleuth',
-
+  {
+    "kylechui/nvim-surround",
+    -- tag = "", -- Use for stability; omit to use `main` branch for the latest features
+    config = function()
+        require("nvim-surround").setup({
+            -- Configuration here, or leave empty to use defaults
+        })
+    end
+  },
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
   { -- LSP Configuration & Plugins
@@ -81,6 +90,7 @@ require('lazy').setup({
       -- Automatically install LSPs to stdpath for neovim
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
+      'RishabhRD/nvim-lsputils',
 
       -- Useful status updates for LSP
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
@@ -98,6 +108,8 @@ require('lazy').setup({
 
   -- Useful plugin to show you pending keybinds.
   { 'folke/which-key.nvim', opts = {} },
+  { 'folke/trouble.nvim', opts = {} },
+  'nvim-tree/nvim-web-devicons',
   { -- Adds git releated signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
     opts = {
@@ -152,14 +164,17 @@ require('lazy').setup({
   -- Fuzzy Finder Algorithm which requires local dependencies to be built.
   -- Only load if `make` is available. Make sure you have the system
   -- requirements installed.
-  {
-    'nvim-telescope/telescope-fzf-native.nvim',
-    -- NOTE: If you are having trouble with this installation,
-    --       refer to the README for telescope-fzf-native for more instructions.
-    build = 'make',
-    cond = function()
-      return vim.fn.executable 'make' == 1
-    end,
+  -- {
+  --   'nvim-telescope/telescope-fzf-native.nvim',
+  --   -- NOTE: If you are having trouble with this installation,
+  --   --       refer to the README for telescope-fzf-native for more instructions.
+  --   build = 'make',
+  --   cond = function()
+  --     return vim.fn.executable 'make' == 1
+  --   end,
+  -- },
+  {'nvim-telescope/telescope-fzf-native.nvim',
+    build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build'
   },
 
   { -- Highlight, edit, and navigate code
@@ -192,6 +207,8 @@ require('lazy').setup({
 -- [[ Setting options ]]
 -- See `:help vim.o`
 
+-- uses spaces for indentation
+vim.o.inde = "    "
 -- Set highlight on search
 vim.o.hlsearch = false
 
@@ -231,6 +248,42 @@ vim.o.completeopt = 'menuone,noselect'
 vim.o.termguicolors = true
 
 -- [[ Basic Keymaps ]]
+--
+-- my Custom mappings
+--
+-- normal mode
+--     **filepath stuff**
+vim.keymap.set('n', 'gf', ':vert winc f<cr>')
+
+-- this line does 2 things at once! 
+-- copies curent path to register: f, path + file to register: F 
+vim.keymap.set('n', 'yf', ':let @f = expand("%:p") |:let @F = expand("%:p:h")<CR>')
+--    moves split panes
+vim.keymap.set('n', '<A-h>', '<C-W>H')
+vim.keymap.set('n', '<A-j>', '<C-W>J')
+vim.keymap.set('n', '<A-k>', '<C-W>K')
+vim.keymap.set('n', '<A-l>', '<C-W>L')
+--    switch split windows
+vim.keymap.set('n', '<C-h>', '<C-w>h')
+vim.keymap.set('n', '<C-j>', '<C-w>j')
+vim.keymap.set('n', '<C-k>', '<C-w>k')
+vim.keymap.set('n', '<C-l>', '<C-w>l')
+-- insert line break left of cursor
+vim.keymap.set('n', 'K', 'i<cr><Esc>^')
+
+-- insert mode
+--    these 2 shift current line in insert mode
+vim.keymap.set('i', '<A-j>', '<Esc>:m .+1<CR>==gi')
+vim.keymap.set('i', '<A-k>', '<Esc>:m .-2<CR>==gi')
+
+--    these 2 exit insert mode easily
+vim.keymap.set('i', 'JJ', '<Esc>')
+vim.keymap.set('i', 'jk', '<Esc>')
+--  remove comment on line
+vim.keymap.set('i', '<C-/>', '<C-o>gcc')
+-- Terminal mode
+-- easier normal mode
+vim.keymap.set('t', 'JJ', "<C-\\><C-n>")
 
 -- Keymaps for better default experience
 -- See `:help vim.keymap.set()`
@@ -291,7 +344,7 @@ require('nvim-treesitter.configs').setup {
   ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'typescript', 'help', 'vim' },
 
   -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
-  auto_install = false,
+  auto_install = true,
 
   highlight = { enable = true },
   indent = { enable = true, disable = { 'python' } },
@@ -384,8 +437,8 @@ local on_attach = function(_, bufnr)
   nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
 
   -- See `:help K` for why this keymap
-  nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
-  nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
+  nmap('gh', vim.lsp.buf.hover, 'Hover Documentation')
+  nmap('gH', vim.lsp.buf.signature_help, 'Signature Documentation')
 
   -- Lesser used LSP functionality
   nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
@@ -407,11 +460,12 @@ end
 --  Add any additional override configuration in the following tables. They will be passed to
 --  the `settings` field of the server config. You must look up that documentation yourself.
 local servers = {
-  -- clangd = {},
-  -- gopls = {},
-  -- pyright = {},
-  -- rust_analyzer = {},
-  -- tsserver = {},
+  clangd = {},
+  pyright = {},
+  rust_analyzer = {},
+  tsserver = {},
+  fsautocomplete = {},
+  jdtls = {},
 
   lua_ls = {
     Lua = {
@@ -493,5 +547,15 @@ cmp.setup {
   },
 }
 
+--GUI settings
+--NeoVide
+if vim.g.neovide then
+  --do stuff for neovide Only
+  vim.g.neovide_cursor_animation_length = 0.35
+  vim.g.neovide_cursor_trail_size = 0.2
+  vim.g.neovide_cursor_vfx_mode = 'railgun'
+  vim.g.neovide_cursor_vfx_particle_lifetime = 1.2
+   vim.opt.guifont = { "Hack NF", "h16" }
+end
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
