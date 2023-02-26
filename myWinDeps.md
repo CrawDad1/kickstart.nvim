@@ -13,6 +13,7 @@ I believe thse are the install commands used, many sub-packages also installed a
 - FiraCode
 - nerd-fonts-Hack
 - python3
+- cMake
 
 ## Complete List
 
