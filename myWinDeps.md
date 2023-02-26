@@ -63,4 +63,4 @@ neovim uses packages for Node.js and Python3 to interact with them
 
 ` pip install neovim
 
-` npm install neovim
+` npm install -g neovim
