@@ -35,7 +35,6 @@ I hope you enjoy your Neovim journey,
 
 P.S. You can delete this when you're done too. It's your config now :)
 --]]
-
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
@@ -77,9 +76,9 @@ require('lazy').setup({
     "kylechui/nvim-surround",
     -- tag = "", -- Use for stability; omit to use `main` branch for the latest features
     config = function()
-        require("nvim-surround").setup({
-            -- Configuration here, or leave empty to use defaults
-        })
+      require("nvim-surround").setup({
+        -- Configuration here, or leave empty to use defaults
+      })
     end
   },
   -- NOTE: This is where your plugins related to LSP can be installed.
@@ -108,7 +107,7 @@ require('lazy').setup({
 
   -- Useful plugin to show you pending keybinds.
   { 'folke/which-key.nvim', opts = {} },
-  { 'folke/trouble.nvim', opts = {} },
+  { 'folke/trouble.nvim',   opts = {} },
   'nvim-tree/nvim-web-devicons',
   { -- Adds git releated signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -156,7 +155,12 @@ require('lazy').setup({
   },
 
   -- "gc" to comment visual regions/lines
-  { 'numToStr/Comment.nvim', opts = {} },
+  { 'numToStr/Comment.nvim',         opts = {} },
+
+  { "windwp/nvim-autopairs",
+    config = function()
+      require("nvim-autopairs").setup {}
+    end },
 
   -- Fuzzy Finder (files, lsp, etc)
   { 'nvim-telescope/telescope.nvim', version = '*', dependencies = { 'nvim-lua/plenary.nvim' } },
@@ -173,7 +177,7 @@ require('lazy').setup({
   --     return vim.fn.executable 'make' == 1
   --   end,
   -- },
-  {'nvim-telescope/telescope-fzf-native.nvim',
+  { 'nvim-telescope/telescope-fzf-native.nvim',
     build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build'
   },
 
@@ -190,8 +194,8 @@ require('lazy').setup({
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
   --       Uncomment any of the lines below to enable them.
-  -- require 'kickstart.plugins.autoformat',
-  -- require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.autoformat',
+  require 'kickstart.plugins.debug',
 
   -- NOTE: The import below automatically adds your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    You can use this folder to prevent any conflicts with this init.lua if you're interested in keeping
@@ -255,8 +259,8 @@ vim.o.termguicolors = true
 --     **filepath stuff**
 vim.keymap.set('n', 'gf', ':vert winc f<cr>')
 
--- this line does 2 things at once! 
--- copies curent path to register: f, path + file to register: F 
+-- this line does 2 things at once!
+-- copies curent path to register: f, path + file to register: F
 vim.keymap.set('n', 'yf', ':let @f = expand("%:p") |:let @F = expand("%:p:h")<CR>')
 --    moves split panes
 vim.keymap.set('n', '<A-h>', '<C-W>H')
@@ -466,7 +470,6 @@ local servers = {
   tsserver = {},
   fsautocomplete = {},
   jdtls = {},
-
   lua_ls = {
     Lua = {
       workspace = { checkThirdParty = false },
@@ -505,6 +508,8 @@ mason_lspconfig.setup_handlers {
 -- nvim-cmp setup
 local cmp = require 'cmp'
 local luasnip = require 'luasnip'
+local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+local handlers = require('nvim-autopairs.completion.handlers')
 
 luasnip.config.setup {}
 
@@ -515,7 +520,7 @@ cmp.setup {
     end,
   },
   mapping = cmp.mapping.preset.insert {
-    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-d>'] = cmp.mapping.scroll_docs( -4),
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete {},
     ['<CR>'] = cmp.mapping.confirm {
@@ -534,28 +539,64 @@ cmp.setup {
     ['<S-Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_prev_item()
-      elseif luasnip.jumpable(-1) then
-        luasnip.jump(-1)
+      elseif luasnip.jumpable( -1) then
+        luasnip.jump( -1)
       else
         fallback()
       end
     end, { 'i', 's' }),
   },
+  cmp.event:on(
+    'confirm_done',
+    cmp_autopairs.on_confirm_done({
+      filetypes = {
+        -- "*" is a alias to all filetypes
+        ["*"] = {
+          ["("] = {
+            kind = {
+              cmp.lsp.CompletionItemKind.Function,
+              cmp.lsp.CompletionItemKind.Method,
+            },
+            handler = handlers["*"]
+          }
+        },
+        lua = {
+          ["("] = {
+            kind = {
+              cmp.lsp.CompletionItemKind.Function,
+              cmp.lsp.CompletionItemKind.Method
+            },
+            ---@param char string
+            ---@param item table item completion
+            ---@param bufnr number buffer number
+            ---@param rules table
+            ---@param commit_character table<string>
+            handler = function(char, item, bufnr, rules, commit_character)
+              -- Your handler function. Inpect with print(vim.inspect{char, item, bufnr, rules, commit_character})
+            end
+          }
+        },
+        -- Disable for tex
+        tex = false
+      }
+    })
+  ),
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
   },
 }
 
+--cmp + autopairs config
 --GUI settings
 --NeoVide
 if vim.g.neovide then
   --do stuff for neovide Only
-  vim.g.neovide_cursor_animation_length = 0.35
+  vim.g.neovide_cursor_animation_length = 0.2
   vim.g.neovide_cursor_trail_size = 0.2
   vim.g.neovide_cursor_vfx_mode = 'railgun'
   vim.g.neovide_cursor_vfx_particle_lifetime = 1.2
-   vim.opt.guifont = { "Hack NF", "h16" }
+  vim.opt.guifont = { "Hack NF", "h16" }
 end
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
