@@ -68,7 +68,10 @@ require('lazy').setup({
   -- Git related plugins
   'tpope/vim-fugitive',
   'tpope/vim-rhubarb',
+
+  -- Start page + sessions
   'mhinz/vim-startify',
+
 
   -- Detect tabstop and shiftwidth automatically
   'tpope/vim-sleuth',
@@ -254,14 +257,16 @@ vim.o.termguicolors = true
 -- [[ Basic Keymaps ]]
 --
 -- my Custom mappings
---
+-- Global Tools
+vim.keymap.set('n', '<F2>', vim.cmd.Neotree)
+vim.keymap.set('n', '<F4>', vim.cmd.Trouble)
 -- normal mode
 --     **filepath stuff**
 vim.keymap.set('n', 'gf', ':vert winc f<cr>')
 
 -- this line does 2 things at once!
 -- copies curent path to register: f, path + file to register: F
-vim.keymap.set('n', 'yf', ':let @f = expand("%:p") |:let @F = expand("%:p:h")<CR>')
+vim.keymap.set('n', 'yf', ':let @f = expand("%:p") |:let @F = expand("%:p:h")<CR>', { desc = "[y]ank [f]ile path" })
 --    moves split panes
 vim.keymap.set('n', '<A-h>', '<C-W>H')
 vim.keymap.set('n', '<A-j>', '<C-W>J')
@@ -588,6 +593,9 @@ cmp.setup {
 }
 
 --cmp + autopairs config
+--startify settings
+vim.g.startify_session_autoload = 1
+vim.g.startify_session_persistence = 1
 --GUI settings
 --NeoVide
 if vim.g.neovide then
